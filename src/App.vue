@@ -2,32 +2,54 @@
 
 <template>
   <div class="app">
-    <PostFormVue @create="createPost" />
-    <PostListVue :posts="posts" />
+    <h1>Page with posts</h1>
+    <my-button @click="showDialog" style="margin: 15px 0px"
+      >Create post</my-button
+    >
+    <MyDialog v-model:show="dialogVisible">
+      <PostFormVue @create="createPost" />
+    </MyDialog>
+    <PostListVue :posts="posts" @remove="deletePost" />
   </div>
 </template>
 
 <script>
 import PostFormVue from "./components/PostForm.vue";
 import PostListVue from "./components/PostList.vue";
+import MyDialog from "./components/UI/MyDialog.vue";
+import axios from "axios";
 export default {
   components: {
     PostFormVue,
     PostListVue,
+    MyDialog,
   },
   data() {
     return {
-      posts: [
-        { id: 1, title: "JavaScript", body: "Description JS" },
-        { id: 2, title: "HTML", body: "Description HTML" },
-        { id: 3, title: "CSS", body: "Description Css" },
-        { id: 4, title: "ReactJS", body: "Description REACT" },
-      ],
+      posts: [],
+      dialogVisible: false,
     };
   },
   methods: {
     createPost(post) {
       this.posts.push(post);
+      this.dialogVisible = false;
+    },
+    deletePost(post) {
+      this.posts = this.posts.filter((p) => p.id !== post.id);
+    },
+    showDialog() {
+      this.dialogVisible = true;
+    },
+    async fetchPosts() {
+      try {
+        const response = await axios.get(
+          "https://jsonplaceholder.typicode.com/posts?_limit=10"
+        );
+        this.posts = response.data;
+      } catch (e) {
+        alert("Error");
+      }
     },
   },
 };
