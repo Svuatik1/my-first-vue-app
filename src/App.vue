@@ -3,13 +3,19 @@
 <template>
   <div class="app">
     <h1>Page with posts</h1>
-    <my-button @click="showDialog" style="margin: 15px 0px"
-      >Create post</my-button
-    >
+    <div class="app_btns">
+      <my-button @click="showDialog">Create post</my-button>
+      <MySelectVue v-model="selectedSort" :options="sortOptions" />
+    </div>
     <MyDialog v-model:show="dialogVisible">
       <PostFormVue @create="createPost" />
     </MyDialog>
-    <PostListVue :posts="posts" @remove="deletePost" />
+    <PostListVue
+      v-if="!this.isPostLoading"
+      :posts="posts"
+      @remove="deletePost"
+    />
+    <div v-else>Loading...</div>
   </div>
 </template>
 
@@ -17,17 +23,25 @@
 import PostFormVue from "./components/PostForm.vue";
 import PostListVue from "./components/PostList.vue";
 import MyDialog from "./components/UI/MyDialog.vue";
+import MySelectVue from "./components/UI/MySelect.vue";
 import axios from "axios";
 export default {
   components: {
     PostFormVue,
     PostListVue,
     MyDialog,
+    MySelectVue,
   },
   data() {
     return {
       posts: [],
       dialogVisible: false,
+      isPostLoading: false,
+      selectedSort: "",
+      sortOptions: [
+        { value: "title", name: "from title" },
+        { value: "body", name: "from body" },
+      ],
     };
   },
   methods: {
@@ -43,13 +57,27 @@ export default {
     },
     async fetchPosts() {
       try {
-        const response = await axios.get(
-          "https://jsonplaceholder.typicode.com/posts?_limit=10"
-        );
-        this.posts = response.data;
+        this.isPostLoading = true;
+        setTimeout(async () => {
+          const response = await axios.get(
+            "https://jsonplaceholder.typicode.com/posts?_limit=10"
+          );
+          this.posts = response.data;
+          this.isPostLoading = false;
+        }, 1000);
       } catch (e) {
         alert("Error");
       }
+    },
+  },
+  mounted() {
+    this.fetchPosts();
+  },
+  watch: {
+    selectedSort(newValue) {
+      this.posts.sort((post1, post2) => {
+        return post1[newValue]?.localeCompare(post2[newValue]);
+      });
     },
   },
 };
@@ -63,5 +91,10 @@ export default {
 }
 .app {
   padding: 20px;
+}
+.app_btns {
+  margin: 15px 0;
+  display: flex;
+  justify-content: space-between;
 }
 </style>
